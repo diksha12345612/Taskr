@@ -26,6 +26,31 @@
 
 ---
 
+## 📊 Database Architecture
+
+Taskr uses **Prisma ORM** with a relational structure designed for performance and data integrity.
+
+### 🧱 Core Models
+*   **User**: Stores profiles, hashed credentials, and system roles (`Admin`, `Manager`, `Member`).
+*   **Project**: High-level initiatives with progress tracking and status lifecycle.
+*   **Task**: Individual action items linked to Projects and assigned to Users.
+*   **Attendance**: Daily logs tracking `checkIn` and `checkOut` timestamps for every member.
+*   **Leave**: Managed requests for time off, tracking dates, reasons, and approval status.
+
+### 🔗 Key Relationships
+*   **One-to-Many**: A `Project` can have many `Tasks`.
+*   **One-to-Many**: A `User` can be assigned many `Tasks`.
+*   **Self-Referencing**: Attendance and Leaves are strictly tied to a `User` identity for secure HR tracking.
+
+### 🛠️ Database Management
+To explore the database visually, you can run:
+```bash
+cd backend
+npx prisma studio
+```
+
+---
+
 ## 🛠️ Technical Stack
 
 *   **Frontend**: React 18, Vite, Custom Vanilla CSS (Design Tokens), React Router 6.
