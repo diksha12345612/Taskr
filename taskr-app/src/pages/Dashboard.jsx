@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   getProjects, getTasks, getDashboardStats, getMyAttendance, 
-  getMyLeaves, getUsers, createTask, createProject, getAllLeaves, updateLeaveStatus 
+  getMyLeaves, getUsers, createTask, getAllLeaves, updateLeaveStatus 
 } from '../services/api';
 import Sidebar from '../components/Sidebar';
 
@@ -20,13 +20,6 @@ export default function Dashboard() {
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Admin Project Creation State
-  const [newProject, setNewProject] = useState({
-    name: '',
-    description: '',
-    memberIds: []
-  });
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -82,41 +75,13 @@ export default function Dashboard() {
     }
     try {
       await createTask({ title, assigneeId, projectId, priority: 'Medium', status: 'Todo' });
-      const [tRes, sRes] = await Promise.all([getTasks(), getDashboardStats()]);
-      setTasks(tRes.data.data);
-      setStatsData(sRes.data.data);
+      const res = await getTasks();
+      setTasks(res.data.data);
       e.target.reset();
       alert('Task Dispatched.');
     } catch (err) {
       alert('Dispatch failed.');
     }
-  };
-
-  const handleCreateProject = async (e) => {
-    e.preventDefault();
-    if (!newProject.name) {
-      alert("Project name is required.");
-      return;
-    }
-    try {
-      await createProject(newProject);
-      const [pRes, sRes] = await Promise.all([getProjects(), getDashboardStats()]);
-      setProjects(pRes.data.data);
-      setStatsData(sRes.data.data);
-      setNewProject({ name: '', description: '', memberIds: [] });
-      alert('Project Launched.');
-    } catch (err) {
-      alert('Project creation failed.');
-    }
-  };
-
-  const toggleProjectMember = (id) => {
-    setNewProject(prev => ({
-      ...prev,
-      memberIds: prev.memberIds.includes(id)
-        ? prev.memberIds.filter(m => m !== id)
-        : [...prev.memberIds, id]
-    }));
   };
 
   if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#f8fafc] text-blue-600 font-bold uppercase text-[10px] tracking-[0.2em] animate-pulse">Establishing Secure Uplink...</div>;
@@ -208,52 +173,7 @@ export default function Dashboard() {
             </div>
 
             {/* 2. MANAGEMENT HUB */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-               
-               {/* PROJECT LAUNCH */}
-               <div className="card p-10 bg-white border border-slate-200">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Initiate New Project</h3>
-                  <form onSubmit={handleCreateProject} className="space-y-4">
-                     <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Project Name</label>
-                        <input 
-                           type="text" 
-                           placeholder="e.g. Phoenix Initiative" 
-                           value={newProject.name}
-                           onChange={e => setNewProject({...newProject, name: e.target.value})}
-                           className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-5 text-sm outline-none focus:border-blue-600 transition-all" 
-                        />
-                     </div>
-                     <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Description</label>
-                        <textarea 
-                           placeholder="Brief summary..." 
-                           value={newProject.description}
-                           onChange={e => setNewProject({...newProject, description: e.target.value})}
-                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm outline-none focus:border-blue-600 resize-none h-20"
-                        />
-                     </div>
-                     <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Assign Initial Members</label>
-                        <div className="max-h-32 overflow-y-auto space-y-1 p-2 bg-slate-50 border border-slate-100 rounded-2xl">
-                           {allUsers.map(u => (
-                              <label key={u.id} className="flex items-center gap-2 p-1.5 hover:bg-white rounded-xl cursor-pointer transition-all">
-                                 <input 
-                                    type="checkbox" 
-                                    checked={newProject.memberIds.includes(u.id)}
-                                    onChange={() => toggleProjectMember(u.id)}
-                                    className="accent-blue-600 w-3.5 h-3.5"
-                                 />
-                                 <span className="text-xs font-bold text-slate-700">{u.name}</span>
-                              </label>
-                           ))}
-                        </div>
-                     </div>
-                     <button type="submit" className="w-full h-12 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 transition-all mt-4">Launch Project</button>
-                  </form>
-               </div>
-
-               {/* TASK DISPATCH */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                <div className="card p-10 bg-white border border-slate-200">
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Dispatch New Task</h3>
                   <form onSubmit={handleCreateTask} className="space-y-4">
@@ -275,15 +195,14 @@ export default function Dashboard() {
                            {allUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                         </select>
                      </div>
-                     <button type="submit" className="w-full h-12 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20 transition-all mt-10">Submit Assignment</button>
+                     <button type="submit" className="w-full h-12 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20 transition-all">Submit Assignment</button>
                   </form>
                </div>
 
-               {/* SYSTEM ACTIVITY */}
                <div className="card p-10 bg-white border border-slate-200 overflow-hidden">
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Live System Activity</h3>
-                  <div className="space-y-6 max-h-[380px] overflow-y-auto pr-2">
-                     {tasks.length > 0 ? tasks.slice(0, 6).map(t => (
+                  <div className="space-y-6 max-h-[320px] overflow-y-auto pr-2">
+                     {tasks.slice(0, 5).map(t => (
                        <div key={t.id} className="flex items-center gap-4 group">
                           <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-sm font-bold text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
                              {t.assignedTo?.name?.charAt(0) || '?'}
@@ -294,9 +213,7 @@ export default function Dashboard() {
                           </div>
                           <div className={`w-2 h-2 rounded-full ${t.status === 'Completed' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
                        </div>
-                     )) : (
-                        <p className="text-xs text-slate-400 italic">No activity detected.</p>
-                     )}
+                     ))}
                   </div>
                </div>
             </div>
