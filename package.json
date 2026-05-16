@@ -7,8 +7,8 @@
     "install:frontend": "cd taskr-app && npm install",
     "build:frontend": "cd taskr-app && npm run build",
     "db:setup": "cd backend && npx prisma generate && npx prisma db push --accept-data-loss",
-    "postinstall": "npm run install:backend && npm run install:frontend && npm run build:frontend",
-    "start": "npm run db:setup && cd backend && npm start",
+    "postinstall": "npm run install:backend && npm run install:frontend && npm run build:frontend && npm run db:setup",
+    "start": "cd backend && npm start",
     "dev": "npm run install:backend && cd backend && npm run dev"
   }
 }
