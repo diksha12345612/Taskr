@@ -2,7 +2,7 @@
 
 **Taskr** is a production-ready, full-stack collaborative platform designed for teams to manage projects, assign tasks, and track performance in real-time.
 
-![Login Page](./login.png)
+![Login Page](./backend/login.png)
 
 ## ✨ Key Features
 
