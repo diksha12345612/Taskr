@@ -28,8 +28,8 @@ if (!config.database_url) {
     throw new Error('DATABASE_URL environment variable is required');
 }
 
-if (!config.jwt_secret || config.jwt_secret.length < 32) {
-    throw new Error('JWT_SECRET must be at least 32 characters long');
+if (!config.jwt_secret) {
+    throw new Error('JWT_SECRET environment variable is required');
 }
 
 export default config;
