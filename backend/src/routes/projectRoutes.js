@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProjects, createProject, deleteProject } from '../controllers/projectController.js';
+import { getProjects, createProject, updateProject, deleteProject, updateProjectMembers } from '../controllers/projectController.js';
 import { authenticate } from '../middleware/auth.js';
 import { allowRoles } from '../middleware/roleMiddleware.js';
 
@@ -18,6 +18,14 @@ router.get('/', authenticate, getProjects);
  * @access  Private (Admin Only)
  */
 router.post('/', authenticate, allowRoles('Admin'), createProject);
+router.patch('/:id', authenticate, updateProject);
+
+/**
+ * @route   PATCH /api/projects/:id/members
+ * @desc    Update project members
+ * @access  Private (Admin Only)
+ */
+router.patch('/:id/members', authenticate, allowRoles('Admin'), updateProjectMembers);
 
 /**
  * @route   DELETE /api/projects/:id

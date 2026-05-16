@@ -8,11 +8,17 @@ import prisma from '../config/database.js';
 export const getTasks = async (req, res, next) => {
     try {
         const { projectId } = req.query;
+        const { id, role } = req.user;
 
         // Construct where clause
         const whereClause = {};
         if (projectId) {
             whereClause.projectId = projectId;
+        }
+
+        // Members can only see their assigned tasks
+        if (role === 'Member') {
+            whereClause.assigneeId = id;
         }
 
         const tasks = await prisma.task.findMany({
@@ -138,6 +144,14 @@ export const updateTaskStatus = async (req, res, next) => {
             });
         }
 
+        // Authorization: Member can only update their own assigned tasks
+        if (req.user.role === 'Member' && task.assigneeId !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. You can only update tasks assigned to you.'
+            });
+        }
+
         const updatedTask = await prisma.task.update({
             where: { id },
             data: { status },
@@ -189,6 +203,72 @@ export const deleteTask = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: 'Task deleted successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Get dashboard stats
+ * GET /api/tasks/stats
+ * Access: Private
+ */
+export const getDashboardStats = async (req, res, next) => {
+    try {
+        const { id, role } = req.user;
+        const now = new Date();
+
+        const where = role === 'Member' ? { assigneeId: id } : {};
+
+        const [totalTasks, tasksByStatus, overdueTasks, tasksPerUser] = await Promise.all([
+            prisma.task.count({ where }),
+            prisma.task.groupBy({
+                by: ['status'],
+                where,
+                _count: true
+            }),
+            prisma.task.count({
+                where: {
+                    ...where,
+                    dueDate: { lt: now },
+                    status: { not: 'Completed' }
+                }
+            }),
+            role === 'Admin' ? prisma.task.groupBy({
+                by: ['assigneeId'],
+                _count: true
+            }) : null
+        ]);
+
+        // Format tasksPerUser if Admin
+        let formattedTasksPerUser = [];
+        if (role === 'Admin' && tasksPerUser) {
+            const users = await prisma.user.findMany({
+                where: { id: { in: tasksPerUser.map(t => t.assigneeId).filter(Boolean) } },
+                select: { id: true, name: true }
+            });
+
+            formattedTasksPerUser = tasksPerUser.map(t => {
+                const user = users.find(u => u.id === t.assigneeId);
+                return {
+                    userName: user ? user.name : 'Unassigned',
+                    count: t._count
+                };
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalTasks,
+                tasksByStatus: tasksByStatus.reduce((acc, curr) => {
+                    acc[curr.status] = curr._count;
+                    return acc;
+                }, {}),
+                overdueTasks,
+                tasksPerUser: formattedTasksPerUser
+            }
         });
     } catch (error) {
         next(error);

@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config/env.js';
 
 // Import Middlewares
-import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 // Import Routes
 import authRoutes from './routes/auth.js';
@@ -12,6 +14,9 @@ import taskRoutes from './routes/taskRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import attendanceRoutes from './routes/attendance.js';
 import leaveRoutes from './routes/leaves.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -24,7 +29,6 @@ const app = express();
 // Request Logger (TOP LEVEL)
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    if (req.method !== 'GET') console.log('Body:', JSON.stringify(req.body, null, 2));
     next();
 });
 
@@ -37,22 +41,6 @@ app.use(cors({
 // Body Parsing Middleware
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
-
-/**
- * ==========================================
- * UTILITY ROUTES
- * ==========================================
- */
-
-// Health check endpoint (for monitoring and infrastructure)
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        success: true,
-        status: 'UP',
-        uptime: Math.floor(process.uptime()),
-        timestamp: new Date().toISOString(),
-    });
-});
 
 /**
  * ==========================================
@@ -70,14 +58,32 @@ app.use(`${config.api_prefix}/leaves`, leaveRoutes);
 
 /**
  * ==========================================
+ * STATIC FILE SERVING (FOR DEPLOYMENT)
+ * ==========================================
+ */
+
+// Serve static assets from the React app
+const frontendPath = path.join(__dirname, '../../taskr-app/dist');
+app.use(express.static(frontendPath));
+
+// Catch-all route for any non-API request to serve index.html (React Router)
+app.get('*', (req, res, next) => {
+    if (req.url.startsWith(config.api_prefix)) return next();
+    res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+        if (err) {
+            // Fallback for local development or if build is missing
+            res.status(200).send('API is running. Frontend build not found.');
+        }
+    });
+});
+
+/**
+ * ==========================================
  * ERROR HANDLING
  * ==========================================
  */
 
-// Catch all for undefined routes (404)
-app.use(notFoundHandler);
-
 // Global exception/error handler
 app.use(errorHandler);
 
-export default app;
+export default app;

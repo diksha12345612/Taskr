@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { getProjects, getUsers, createProject, deleteProject } from '../services/api';
+import { getProjects, createProject, deleteProject, updateProject, getUsers } from '../services/api';
 import Sidebar from '../components/Sidebar';
-import ProjectCard from '../components/ProjectCard';
+import { useAuth } from '../context/AuthContext';
 
 export default function Projects() {
   const { user } = useAuth();
@@ -10,25 +9,24 @@ export default function Projects() {
   
   const [projects, setProjects] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  
-  const [newProject, setNewProject] = useState({
-    name: '',
-    description: '',
+  const [editingId, setEditingId] = useState(null);
+  const [tempProgress, setTempProgress] = useState(0);
+
+  const [newProject, setNewProject] = useState({ 
+    name: '', 
+    description: '', 
+    priority: 'Moderate',
+    status: 'Active',
     memberIds: []
   });
 
-  const fetchData = async () => {
+  const fetchProjects = async () => {
     try {
-      const [projRes, userRes] = await Promise.all([
-        getProjects(),
-        getUsers()
-      ]);
-      setProjects(projRes.data.data || []);
-      setAllUsers(userRes.data.data || []);
-    } catch {
+      const res = await getProjects();
+      setProjects(res.data.data || []);
+    } catch (err) {
       console.error('Failed to fetch projects');
     } finally {
       setLoading(false);
@@ -36,175 +34,233 @@ export default function Projects() {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchProjects();
+    if (isAdmin) {
+      getUsers().then(res => setAllUsers(res.data.data || [])).catch(() => {});
+    }
   }, []);
 
+  const handleUpdateProgress = async (id) => {
+    try {
+      await updateProject(id, { progress: tempProgress });
+      setProjects(projects.map(p => p.id === id ? { ...p, progress: tempProgress } : p));
+      setEditingId(null);
+      alert('Progress updated!');
+    } catch (err) {
+      alert('Failed to update progress.');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Only send fields that exist in the database schema
+      await createProject({
+        name: newProject.name,
+        description: newProject.description,
+        status: newProject.status,
+        memberIds: newProject.memberIds,
+        progress: 0
+      });
+      await fetchProjects();
+      setShowModal(false);
+      setNewProject({ name: '', description: '', priority: 'Moderate', status: 'Active', memberIds: [] });
+    } catch (err) {
+      console.error('Create project error:', err.response?.data || err.message);
+      alert(err.response?.data?.message || 'Failed to create project');
+    }
+  };
+
+  const toggleMember = (id) => {
+    setNewProject(prev => ({
+      ...prev,
+      memberIds: prev.memberIds.includes(id)
+        ? prev.memberIds.filter(m => m !== id)
+        : [...prev.memberIds, id]
+    }));
+  };
+
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this project?')) return;
+    if (!window.confirm('Delete this project?')) return;
     try {
       await deleteProject(id);
       setProjects(projects.filter(p => p.id !== id));
-    } catch {
-      alert('Failed to delete project');
+    } catch (err) {
+      alert('Delete failed');
     }
   };
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await createProject(newProject);
-      setProjects([...projects, res.data.data]);
-      setShowModal(false);
-      setNewProject({ name: '', description: '', memberIds: [] });
-      alert('Awesome! Your new project has been launched. 🚀');
-    } catch {
-      alert('Oops! Something went wrong. Let\'s try creating it again.');
-    }
-  };
-
-  const filteredProjects = projects.filter(p => {
-    if (filter === 'All') return true;
-    return p.status?.toLowerCase() === filter.toLowerCase();
-  });
 
   return (
-    <div className="flex h-screen bg-[var(--bg-base)] text-[var(--text-primary)] pl-[236px]">
+    <div className="flex h-screen bg-[#f8fafc] text-slate-900">
       <Sidebar />
       
-      <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-10">
-        <header className="flex items-center justify-between mb-12" style={{ animation: 'springIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+      <main className="flex-1 overflow-y-auto p-12 lg:p-16 ml-[236px] animate-fade">
+        <header className="mb-12 flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-1">
-               <span className="text-3xl">🚀</span>
-               <h1 className="text-[32px] font-[800] tracking-tight">Projects</h1>
-            </div>
-            <p className="text-[14px] text-[var(--text-secondary)] font-medium">Coordinate and track your team's big initiatives.</p>
+            <h1 className="text-4xl font-black tracking-tighter mb-2">Projects</h1>
+            <p className="text-sm text-slate-500 font-medium">Strategic initiatives and team workspaces.</p>
           </div>
           {isAdmin && (
-            <button 
-              onClick={() => setShowModal(true)}
-              className="h-[48px] px-8 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-[14px] font-bold rounded-2xl transition-all shadow-lg shadow-[var(--accent-dim)] transform active:scale-95"
-            >
-              Start New Project
+            <button onClick={() => setShowModal(true)} className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl text-xs font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20">
+              New Project
             </button>
           )}
         </header>
 
-        {/* Filters */}
-        <div className="flex items-center gap-3 mb-10" style={{ animation: 'springIn 0.8s ease 0.1s both' }}>
-          {['All', 'Active', 'Review', 'Hold'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-6 py-2.5 rounded-2xl text-[12px] font-[800] transition-all border shadow-sm ${
-                filter === f 
-                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white shadow-md' 
-                  : 'bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        {/* Grid */}
-        <div className="pb-12" style={{ animation: 'springIn 0.8s ease 0.2s both' }}>
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="h-[240px] glass-card animate-pulse" />
-            ))}
-          </div>
-        ) : filteredProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <div key={project.id} className="relative group">
-                <ProjectCard {...project} />
-                {isAdmin && (
-                  <button 
-                    onClick={() => handleDelete(project.id)}
-                    className="absolute top-6 right-6 p-2 text-[var(--text-faint)] hover:text-[var(--red)] hover:bg-[var(--red-dim)] rounded-xl opacity-0 group-hover:opacity-100 transition-all"
-                    title="Delete Project"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 pb-20">
+          {loading ? (
+            [1,2].map(i => <div key={i} className="h-80 bg-white rounded-[40px] animate-pulse border border-slate-100" />)
+          ) : projects.length > 0 ? (
+            projects.map(p => (
+            <div key={p.id} className="card p-10 bg-white border border-slate-100 group hover:border-blue-100 transition-all relative overflow-hidden flex flex-col">
+              
+              <div className="flex justify-between items-start mb-8">
+                 <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-[24px] bg-blue-50 flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform">📂</div>
+                    <div>
+                       <h3 className="text-2xl font-black text-slate-900 leading-none mb-2">{p.name}</h3>
+                       <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${
+                         p.priority === 'High' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                       }`}>
+                          {p.priority} Priority
+                       </span>
+                    </div>
+                 </div>
+                 {isAdmin && (
+                    <button onClick={() => handleDelete(p.id)} className="p-2 text-slate-200 hover:text-red-500 transition-colors">
+                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                 )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-center glass-card">
-            <div className="w-20 h-20 bg-[var(--bg-raised)] rounded-[32px] flex items-center justify-center mb-6 border border-[var(--glass-border)]">
-              <svg className="w-10 h-10 text-[var(--text-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
+
+              <div className="mb-10">
+                 <p className="text-sm text-slate-500 font-medium leading-relaxed mb-6">{p.description || 'Onboarding this initiative into the active workspace.'}</p>
+                 <div className="flex gap-2">
+                    <span className="px-3 py-1 bg-slate-50 rounded-lg text-[9px] font-bold text-slate-400 uppercase tracking-widest">Active</span>
+                    <span className="px-3 py-1 bg-slate-50 rounded-lg text-[9px] font-bold text-slate-400 uppercase tracking-widest">In Sync</span>
+                 </div>
+              </div>
+
+              <div className="mt-auto space-y-8">
+                 <div className="pt-8 border-t border-slate-50">
+                    <div className="flex justify-between items-end mb-4">
+                       <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Project Status</p>
+                          <p className="text-2xl font-black text-blue-600">{editingId === p.id ? tempProgress : p.progress}%</p>
+                       </div>
+                       {editingId === p.id ? (
+                         <div className="flex gap-2">
+                            <button onClick={() => handleUpdateProgress(p.id)} className="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl">Save</button>
+                            <button onClick={() => setEditingId(null)} className="px-4 py-2 bg-slate-100 text-slate-400 text-[10px] font-black uppercase rounded-xl">Cancel</button>
+                         </div>
+                       ) : (
+                         <button 
+                           onClick={() => { setEditingId(p.id); setTempProgress(p.progress); }} 
+                           className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                         >
+                           Update Work
+                         </button>
+                       )}
+                    </div>
+
+                    {editingId === p.id ? (
+                      <input 
+                        type="range" 
+                        min="0" max="100" 
+                        value={tempProgress} 
+                        onChange={(e) => setTempProgress(parseInt(e.target.value))}
+                        className="w-full h-1.5 bg-slate-100 rounded-full appearance-none cursor-pointer accent-blue-600 mb-2"
+                      />
+                    ) : (
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                         <div className="h-full bg-blue-600 transition-all duration-700" style={{ width: `${p.progress}%` }}></div>
+                      </div>
+                    )}
+                 </div>
+              </div>
+
             </div>
-            <h3 className="text-[18px] font-[800] text-[var(--text-primary)] mb-2">No projects yet</h3>
-            <p className="text-[14px] text-[var(--text-muted)] max-w-[280px] mb-10 font-medium">Start by creating your first team initiative to get things moving.</p>
-            {isAdmin && (
-              <button 
-                onClick={() => setShowModal(true)}
-                className="px-10 py-3 bg-[var(--accent)] text-white text-[14px] font-[800] rounded-2xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent-dim)]"
-              >
-                Launch your first project
-              </button>
-            )}
-          </div>
-        )}
+          ))) : (
+            <div className="col-span-full py-24 text-center bg-white rounded-[40px] border border-slate-100">
+               <div className="text-5xl mb-6 grayscale opacity-20">📂</div>
+               <p className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">No Projects Found</p>
+               <p className="text-xs text-slate-400 font-medium italic">There are currently no active projects in the workspace.</p>
+               {isAdmin && (
+                 <button onClick={() => setShowModal(true)} className="mt-8 px-6 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20">Create First Project</button>
+               )}
+            </div>
+          )}
         </div>
 
-        {/* Create Modal */}
+        {/* Modal for Admin Creation */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] flex items-center justify-center p-6">
-            <div 
-              className="bg-[var(--bg-surface)] border border-[var(--glass-border)] w-full max-w-[500px] rounded-[32px] p-10 shadow-2xl relative"
-              style={{ animation: 'springIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
-            >
-              <h2 className="text-[24px] font-[800] mb-2">New Project</h2>
-              <p className="text-[14px] text-[var(--text-muted)] mb-10 font-medium">Set up a new workspace for your team goals.</p>
-
-              <form onSubmit={handleCreate} className="space-y-8">
-                <div>
-                  <label className="block text-[11px] font-black text-[var(--text-faint)] uppercase tracking-[0.2em] mb-3 ml-1">Project Name</label>
-                  <input 
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+            <div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-fade">
+               <h2 className="text-2xl font-black mb-6">New Project</h2>
+               <form onSubmit={handleSubmit} className="space-y-5">
+                  <input
                     required
                     type="text"
+                    placeholder="Project Name"
                     value={newProject.name}
-                    onChange={(e) => setNewProject({...newProject, name: e.target.value})}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-2xl p-4 text-[14px] outline-none focus:border-[var(--accent)] transition-all shadow-inner"
-                    placeholder="e.g. Q4 Growth Strategy"
+                    onChange={e => setNewProject({...newProject, name: e.target.value})}
+                    className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm outline-none focus:border-blue-600"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-black text-[var(--text-faint)] uppercase tracking-[0.2em] mb-3 ml-1">Description</label>
-                  <textarea 
-                    rows="3"
+                  <textarea
+                    placeholder="Description (optional)"
+                    rows="2"
                     value={newProject.description}
-                    onChange={(e) => setNewProject({...newProject, description: e.target.value})}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-2xl p-4 text-[14px] outline-none focus:border-[var(--accent)] transition-all resize-none shadow-inner"
-                    placeholder="What is this project about?"
-                  />
-                </div>
+                    onChange={e => setNewProject({...newProject, description: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm outline-none focus:border-blue-600 resize-none"
+                  ></textarea>
+                  <select
+                    value={newProject.priority}
+                    onChange={e => setNewProject({...newProject, priority: e.target.value})}
+                    className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-5 text-sm outline-none focus:border-blue-600 cursor-pointer"
+                  >
+                    <option value="High">High Priority</option>
+                    <option value="Moderate">Moderate Priority</option>
+                    <option value="Low">Low Priority</option>
+                  </select>
 
-                <div className="flex gap-4 pt-4">
-                  <button 
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 h-[56px] bg-[var(--bg-raised)] text-[var(--text-primary)] text-[14px] font-bold rounded-2xl hover:bg-[var(--border)] transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    className="flex-1 h-[56px] bg-[var(--accent)] text-white text-[14px] font-[800] rounded-2xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent-dim)]"
-                  >
-                    Launch Project
-                  </button>
-                </div>
-              </form>
+                  {/* Assign Members */}
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                      Assign Members
+                    </label>
+                    <div className="max-h-44 overflow-y-auto space-y-1 border border-slate-100 rounded-2xl p-3 bg-slate-50">
+                      {allUsers.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-3">No members available</p>
+                      ) : (
+                        allUsers.map(u => (
+                          <label key={u.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white cursor-pointer transition-all">
+                            <input
+                              type="checkbox"
+                              checked={newProject.memberIds.includes(u.id)}
+                              onChange={() => toggleMember(u.id)}
+                              className="accent-blue-600 w-4 h-4 shrink-0"
+                            />
+                            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
+                              {u.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-800">{u.name}</p>
+                              <p className="text-[10px] text-slate-400">{u.role}</p>
+                            </div>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    {newProject.memberIds.length > 0 && (
+                      <p className="text-[10px] text-blue-600 font-bold mt-2 ml-1">{newProject.memberIds.length} member(s) selected</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 pt-2">
+                     <button type="button" onClick={() => setShowModal(false)} className="flex-1 text-xs font-black uppercase text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
+                     <button type="submit" className="flex-1 h-12 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all">Launch Project</button>
+                  </div>
+               </form>
             </div>
           </div>
         )}

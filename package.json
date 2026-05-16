@@ -1,0 +1,13 @@
+{
+  "name": "taskr-fullstack",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd taskr-app && npm install",
+    "build:frontend": "cd taskr-app && npm run build",
+    "postinstall": "npm run install:backend && npm run install:frontend && npm run build:frontend",
+    "start": "cd backend && npm start",
+    "dev": "npm run install:backend && cd backend && npm run dev"
+  }
+}

@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { registerUser } from '../services/api';
+import { registerUser, googleLogin } from '../services/api';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: ''
+    role: 'Member' // Hardcoded to Member for security
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -17,12 +18,27 @@ export default function Signup() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setApiError(null);
+    try {
+      // Google signups are also forced to Member role on the backend
+      const response = await googleLogin({ credential: credentialResponse.credential });
+      const { user, token } = response.data.data;
+      login(user, token);
+      navigate('/dashboard');
+    } catch (err) {
+      setApiError(err.response?.data?.message || 'Google Auth failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const validate = () => {
     const newErrors = {};
     if (formData.name.length < 2) newErrors.name = 'Name must be at least 2 characters';
     if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
     if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (!formData.role) newErrors.role = 'Role must be selected';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -30,7 +46,6 @@ export default function Signup() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
@@ -55,144 +70,161 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--bg-base)] p-4 font-sans">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[var(--bg-base)] text-[var(--text-primary)] selection:bg-blue-500/10">
       
-      {/* Logo Section */}
-      <div className="flex items-center gap-3 mb-8">
-        <div 
-          className="w-8 h-8 bg-indigo-500 rounded flex items-center justify-center animate-spin"
-          style={{ animationDuration: '3s' }}
-        >
-          <div className="w-4 h-4 bg-[var(--bg-base)] rounded-sm" />
+      {/* Left Column: Branding & Marketing */}
+      <div className="hidden lg:flex flex-1 flex-col justify-center p-20 relative overflow-hidden bg-white">
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-100/40 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-50/30 rounded-full blur-[120px]"></div>
+        
+        <div className="relative z-10 max-w-2xl">
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-500/20">T</div>
+            <span className="text-2xl font-bold tracking-tight text-slate-900">Taskr</span>
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 mb-8">
+             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+             <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">New: Team Workspaces 2.0</span>
+          </div>
+
+          <h1 className="text-6xl font-extrabold tracking-tighter leading-[1.1] mb-8 text-slate-900">
+            The Gateway to <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Collaborative Success</span>
+          </h1>
+          
+          <p className="text-lg text-slate-500 font-medium mb-12 leading-relaxed max-w-xl">
+            Join thousands of teams streamlining their production 
+            workflows with our unified task management ecosystem.
+          </p>
+
+          <div className="grid grid-cols-2 gap-12">
+            <div>
+              <p className="text-4xl font-extrabold mb-1 tracking-tighter text-slate-900">10k+</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Active Users</p>
+            </div>
+            <div>
+              <p className="text-4xl font-extrabold mb-1 tracking-tighter text-slate-900">99.9%</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Uptime Guarantee</p>
+            </div>
+          </div>
         </div>
-        <h1 className="text-3xl font-[800] tracking-tight text-[var(--text-primary)]">
-          Taskr
-        </h1>
       </div>
 
-      {/* Signup Card */}
-      <div 
-        className="w-full max-w-[400px] bg-[var(--bg-surface)] border border-[var(--border)] rounded-[16px] p-[32px] shadow-2xl"
-        style={{ animation: 'fadeSlideIn 0.4s ease forwards' }}
-      >
-        <div className="text-center mb-8">
-          <h2 className="text-[22px] font-semibold text-[var(--text-primary)] mb-1">
-            Create your account
-          </h2>
-          <p className="text-[14px] text-[var(--text-muted)]">
-            Join the workspace today
-          </p>
-        </div>
+      {/* Right Column: Auth Card */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-20 relative bg-[var(--bg-base)]">
+        <div className="w-full max-w-[480px]">
+          <div className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50">
+            <div className="flex border-b border-slate-100">
+              <Link to="/login" className="flex-1 py-5 text-center text-sm font-bold text-slate-400 hover:text-slate-600 transition-all">
+                Sign In
+              </Link>
+              <Link to="/signup" className="flex-1 py-5 text-center text-sm font-bold bg-slate-50 text-slate-900 border-b-2 border-blue-600 transition-all">
+                Register
+              </Link>
+            </div>
 
-        {apiError && (
-          <div className="mb-6 p-3 bg-[var(--red-dim)] text-[var(--red)] text-[12px] rounded-[8px] border border-[var(--red)] border-opacity-20 text-center">
-            {apiError}
-          </div>
-        )}
+            <div className="p-10 lg:p-12">
+              <div className="text-center mb-10">
+                <h2 className="text-3xl font-bold tracking-tight mb-2 text-slate-900">Create Account</h2>
+                <p className="text-sm text-slate-500 font-medium">Get started as a team member today</p>
+              </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Name Input */}
-          <div>
-            <label className="block text-[13px] font-medium text-[var(--text-secondary)] mb-1.5 ml-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className={`w-full bg-[var(--bg-raised)] border ${errors.name ? 'border-[var(--red)]' : 'border-[var(--border)]'} text-[var(--text-primary)] text-[13px] rounded-[10px] px-[14px] py-[10px] outline-none transition-colors focus:border-[var(--accent)] placeholder-[var(--text-faint)]`}
-              placeholder="John Doe"
-            />
-            {errors.name && <p className="text-[var(--red)] text-[11px] mt-1 ml-1">{errors.name}</p>}
-          </div>
-
-          {/* Email Input */}
-          <div>
-            <label className="block text-[13px] font-medium text-[var(--text-secondary)] mb-1.5 ml-1">
-              Email address
-            </label>
-            <input
-              type="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className={`w-full bg-[var(--bg-raised)] border ${errors.email ? 'border-[var(--red)]' : 'border-[var(--border)]'} text-[var(--text-primary)] text-[13px] rounded-[10px] px-[14px] py-[10px] outline-none transition-colors focus:border-[var(--accent)] placeholder-[var(--text-faint)]`}
-              placeholder="you@example.com"
-            />
-            {errors.email && <p className="text-[var(--red)] text-[11px] mt-1 ml-1">{errors.email}</p>}
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <label className="block text-[13px] font-medium text-[var(--text-secondary)] mb-1.5 ml-1">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className={`w-full bg-[var(--bg-raised)] border ${errors.password ? 'border-[var(--red)]' : 'border-[var(--border)]'} text-[var(--text-primary)] text-[13px] rounded-[10px] px-[14px] py-[10px] outline-none transition-colors focus:border-[var(--accent)] placeholder-[var(--text-faint)]`}
-              placeholder="••••••••"
-            />
-            {errors.password && <p className="text-[var(--red)] text-[11px] mt-1 ml-1">{errors.password}</p>}
-          </div>
-
-          {/* Role Dropdown */}
-          <div>
-            <label className="block text-[13px] font-medium text-[var(--text-secondary)] mb-1.5 ml-1">
-              Role
-            </label>
-            <select
-              name="role"
-              required
-              value={formData.role}
-              onChange={handleChange}
-              className={`w-full bg-[var(--bg-raised)] border ${errors.role ? 'border-[var(--red)]' : 'border-[var(--border)]'} text-[var(--text-primary)] text-[13px] rounded-[10px] px-[14px] py-[10px] outline-none transition-colors focus:border-[var(--accent)]`}
-            >
-              <option value="" className="bg-[var(--bg-surface)]">Select a role</option>
-              <option value="Admin" className="bg-[var(--bg-surface)]">Admin</option>
-              <option value="Member" className="bg-[var(--bg-surface)]">Member</option>
-            </select>
-            {errors.role && <p className="text-[var(--red)] text-[11px] mt-1 ml-1">{errors.role}</p>}
-          </div>
-
-          {/* Submit Button */}
-          <div className="mt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-[40px] bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-[700] text-[14px] rounded-[10px] transition-transform disabled:opacity-70 disabled:cursor-not-allowed hover:-translate-y-[1px] flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating account...
-                </>
-              ) : (
-                'Create account'
+              {apiError && (
+                <div className="mb-8 p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl text-center font-medium">
+                  {apiError}
+                </div>
               )}
-            </button>
-          </div>
-        </form>
 
-        {/* Bottom Link */}
-        <div className="mt-6 text-center">
-          <p className="text-[13px] text-[var(--text-secondary)]">
-            Already have an account?{' '}
-            <Link to="/login" className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors">
-              Sign in
-            </Link>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Full Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-5 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all text-slate-900"
+                    placeholder="John Doe"
+                  />
+                  {errors.name && <p className="text-red-500 text-[10px] mt-1.5 ml-1">{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-5 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all text-slate-900"
+                    placeholder="you@example.com"
+                  />
+                  {errors.email && <p className="text-red-500 text-[10px] mt-1.5 ml-1">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Password</label>
+                  <input
+                    type="password"
+                    name="password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-5 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all text-slate-900"
+                    placeholder="••••••••"
+                  />
+                  {errors.password && <p className="text-red-500 text-[10px] mt-1.5 ml-1">{errors.password}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Account Type</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-5 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all text-slate-900 appearance-none cursor-pointer"
+                  >
+                    <option value="Member">Member (Project Access)</option>
+                    <option value="Admin">Admin (Full Management)</option>
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-2xl transition-all shadow-xl shadow-blue-500/20 disabled:opacity-70 mt-4"
+                >
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </form>
+
+              <div className="my-8 flex items-center gap-4">
+                <div className="flex-1 h-px bg-slate-100"></div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Or continue with</span>
+                <div className="flex-1 h-px bg-slate-100"></div>
+              </div>
+
+              <div className="flex justify-center">
+                 <GoogleLogin
+                   onSuccess={handleGoogleSuccess}
+                   onError={() => setApiError('Google Auth Failed')}
+                   useOneTap
+                   theme="outline"
+                   shape="pill"
+                   text="signup_with"
+                   width="320"
+                 />
+              </div>
+            </div>
+          </div>
+          
+          <p className="mt-10 text-center text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em]">
+            Secured by Taskr Intelligence
           </p>
         </div>
-
       </div>
     </div>
   );

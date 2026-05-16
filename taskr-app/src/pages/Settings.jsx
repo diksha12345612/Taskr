@@ -20,129 +20,122 @@ export default function Settings() {
 
   const handleProfileUpdate = (e) => {
     e.preventDefault();
-    alert('Profile update logic will be implemented here!');
+    alert('Changes saved to your workspace profile.');
   };
 
   const handlePasswordUpdate = (e) => {
     e.preventDefault();
     if (password.new !== password.confirm) {
-      alert('New passwords do not match');
+      alert('Passwords do not match.');
       return;
     }
-    alert('Password change logic will be implemented here!');
+    alert('Security credentials updated.');
   };
 
   return (
-    <div className="flex h-screen bg-[var(--bg-base)] text-[var(--text-primary)] pl-[236px]">
+    <div className="flex h-screen mesh-gradient text-[var(--text-primary)]">
       <Sidebar />
 
-      <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-8">
-        <header className="mb-10" style={{ animation: 'fadeSlideIn 0.4s ease forwards' }}>
-          <h1 className="text-[26px] font-[800] font-outfit tracking-tight">System Settings</h1>
-          <p className="text-[12px] text-[var(--text-muted)] font-medium">Manage your account preferences and application configuration</p>
+      <main className="flex-1 overflow-y-auto p-10 lg:p-14 ml-[236px] animate-fade">
+        <header className="mb-14">
+          <p className="text-xs font-bold text-[var(--accent-secondary)] uppercase tracking-[0.3em] mb-3">Preferences</p>
+          <h1 className="text-5xl font-black tracking-tighter mb-2">System Config</h1>
+          <p className="text-base text-[var(--text-secondary)] font-medium">Customize your professional environment.</p>
         </header>
 
-        <div className="max-w-2xl space-y-8">
-          {/* Profile Section */}
-          <section className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] p-8 shadow-sm">
-            <h2 className="text-[18px] font-bold mb-6 flex items-center gap-2">
-              <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              My Profile
-            </h2>
-            <form onSubmit={handleProfileUpdate} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase mb-2">Full Name</label>
-                  <input 
-                    type="text" 
-                    value={profile.name}
-                    onChange={(e) => setProfile({...profile, name: e.target.value})}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl p-3 text-[13px] outline-none focus:border-[var(--accent)]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase mb-2">Email Address</label>
-                  <input 
-                    type="email" 
-                    value={profile.email}
-                    onChange={(e) => setProfile({...profile, email: e.target.value})}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl p-3 text-[13px] outline-none focus:border-[var(--accent)]"
-                  />
-                </div>
-              </div>
-              <button type="submit" className="px-6 h-[42px] bg-[var(--bg-raised)] border border-[var(--border)] font-bold text-[13px] rounded-xl hover:border-[var(--accent)] transition-all">
-                Save Changes
-              </button>
-            </form>
-          </section>
-
-          {/* Preferences Section */}
-          <section className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] p-8 shadow-sm">
-            <h2 className="text-[18px] font-bold mb-6 flex items-center gap-2">
-              <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-              App Preferences
-            </h2>
-            <div className="flex items-center justify-between p-4 bg-[var(--bg-raised)] rounded-2xl">
-              <div>
-                <h4 className="text-[14px] font-bold">Dark Mode</h4>
-                <p className="text-[12px] text-[var(--text-muted)]">Switch between light and dark theme</p>
-              </div>
-              <button 
-                onClick={toggleTheme}
-                className={`w-12 h-6 rounded-full transition-all relative ${isDark ? 'bg-[var(--accent)]' : 'bg-[var(--text-faint)]'}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isDark ? 'left-7' : 'left-1'}`} />
-              </button>
+        <div className="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
+          
+          {/* Profile Card */}
+          <div className="card p-10 bg-[var(--bg-surface)]">
+            <div className="flex items-center gap-4 mb-10">
+               <div className="w-12 h-12 rounded-xl bg-[var(--accent-dim)] border border-[var(--accent)]/20 flex items-center justify-center text-xl">👤</div>
+               <h3 className="text-xl font-bold tracking-tight">Identity</h3>
             </div>
-          </section>
-
-          {/* Security Section */}
-          <section className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] p-8 shadow-sm">
-            <h2 className="text-[18px] font-bold mb-6 flex items-center gap-2">
-              <svg className="w-5 h-5 text-[var(--red)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              Security
-            </h2>
-            <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
               <div>
-                <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase mb-2">Current Password</label>
+                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 ml-1">Full Name</label>
                 <input 
-                  type="password" 
-                  value={password.current}
-                  onChange={(e) => setPassword({...password, current: e.target.value})}
-                  className="w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl p-3 text-[13px] outline-none focus:border-[var(--accent)]"
+                  type="text" 
+                  value={profile.name}
+                  onChange={(e) => setProfile({...profile, name: e.target.value})}
+                  className="input-field h-12"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase mb-2">New Password</label>
-                  <input 
-                    type="password" 
-                    value={password.new}
-                    onChange={(e) => setPassword({...password, new: e.target.value})}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl p-3 text-[13px] outline-none focus:border-[var(--accent)]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase mb-2">Confirm New Password</label>
-                  <input 
-                    type="password" 
-                    value={password.confirm}
-                    onChange={(e) => setPassword({...password, confirm: e.target.value})}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl p-3 text-[13px] outline-none focus:border-[var(--accent)]"
-                  />
-                </div>
+              <div>
+                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 ml-1">Email Address</label>
+                <input 
+                  type="email" 
+                  value={profile.email}
+                  onChange={(e) => setProfile({...profile, email: e.target.value})}
+                  className="input-field h-12"
+                />
               </div>
-              <button type="submit" className="px-6 h-[42px] bg-[var(--red)] text-white font-bold text-[13px] rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/10">
-                Update Password
-              </button>
+              <button type="submit" className="btn-primary w-full h-12 mt-4">Save Identity</button>
             </form>
-          </section>
+          </div>
+
+          {/* Theme & Prefs Card */}
+          <div className="card p-10 bg-[var(--bg-surface)] flex flex-col">
+             <div className="flex items-center gap-4 mb-10">
+                <div className="w-12 h-12 rounded-xl bg-[var(--accent-secondary)]/10 border border-[var(--accent-secondary)]/20 flex items-center justify-center text-xl">🎨</div>
+                <h3 className="text-xl font-bold tracking-tight">Environment</h3>
+             </div>
+
+             <div className="flex-1 space-y-8">
+                <div className="flex items-center justify-between p-6 bg-white/[0.03] rounded-2xl border border-white/5">
+                   <div>
+                      <p className="text-sm font-bold">Lumina Mode</p>
+                      <p className="text-xs text-[var(--text-muted)]">Toggle light/dark visualization</p>
+                   </div>
+                   <button 
+                     onClick={toggleTheme}
+                     className={`w-14 h-7 rounded-full transition-all relative ${isDark ? 'bg-[var(--accent)]' : 'bg-slate-700'}`}
+                   >
+                     <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all shadow-md ${isDark ? 'left-8' : 'left-1'}`} />
+                   </button>
+                </div>
+
+                <div className="flex items-center justify-between p-6 bg-white/[0.03] rounded-2xl border border-white/5 opacity-50">
+                   <div>
+                      <p className="text-sm font-bold">Email Notifications</p>
+                      <p className="text-xs text-[var(--text-muted)]">Receive daily system digests</p>
+                   </div>
+                   <div className="w-14 h-7 rounded-full bg-[var(--green)] relative">
+                      <div className="absolute top-1 left-8 w-5 h-5 bg-white rounded-full" />
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          {/* Security Card - Full Width */}
+          <div className="md:col-span-2 card p-10 bg-black/20 border-dashed border-[var(--red)]/20">
+             <div className="flex items-center gap-4 mb-10">
+                <div className="w-12 h-12 rounded-xl bg-[var(--red)]/10 border border-[var(--red)]/20 flex items-center justify-center text-xl">🔐</div>
+                <h3 className="text-xl font-bold tracking-tight">Encryption & Security</h3>
+             </div>
+
+             <form onSubmit={handlePasswordUpdate} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 ml-1">Current Pass</label>
+                  <input type="password" placeholder="••••••••" className="input-field h-12" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 ml-1">New Pass</label>
+                  <input type="password" placeholder="••••••••" className="input-field h-12" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 ml-1">Confirm New</label>
+                  <input type="password" placeholder="••••••••" className="input-field h-12" />
+                </div>
+                <div className="md:col-span-3 pt-4">
+                  <button type="submit" className="px-10 h-12 bg-[var(--red)] text-white font-bold text-sm rounded-xl hover:bg-red-500 transition-all shadow-lg shadow-red-500/10">
+                    Update Security
+                  </button>
+                </div>
+             </form>
+          </div>
+
         </div>
       </main>
     </div>

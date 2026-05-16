@@ -2,6 +2,8 @@ import prisma from '../config/database.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 import { isValidEmail, isValidPassword, isValidName } from '../utils/validation.js';
 import { generateToken } from '../middleware/auth.js';
+import crypto from 'crypto';
+import { sendEmail } from '../utils/email.js';
 
 /**
  * Register a new user
@@ -9,7 +11,9 @@ import { generateToken } from '../middleware/auth.js';
  */
 export const register = async(req, res, next) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password } = req.body;
+        const role = 'Member'; // Force Member role for security
+
         const passwordConfirm = req.body.passwordConfirm || password; // Fallback if not provided
 
         // ============ Validation ============
@@ -206,6 +210,72 @@ export const getProfile = async(req, res, next) => {
     }
 };
 
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+/**
+ * Google Login
+ * POST /api/auth/google
+ */
+export const googleLogin = async (req, res, next) => {
+    try {
+        const { credential } = req.body;
+        
+        // Verify the Google token
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+        
+        const payload = ticket.getPayload();
+        const { sub, email, name, picture } = payload;
+
+        // Check if user exists
+        let user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        });
+
+        if (!user) {
+            // Create new user if they don't exist
+            user = await prisma.user.create({
+                data: {
+                    name: name,
+                    email: email.toLowerCase(),
+                    password: 'GOOGLE_AUTH_USER', // Placeholder
+                    role: 'Member'
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                }
+            });
+        }
+
+        // Generate token
+        const token = generateToken(user.id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Google login successful',
+            data: {
+                token,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    avatar: picture
+                }
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 /**
  * Logout user (client-side: remove token)
  * POST /api/auth/logout
@@ -218,6 +288,98 @@ export const logout = async(req, res, next) => {
             success: true,
             message: 'Logout successful. Please remove token from client.',
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Forgot Password
+ * POST /api/auth/forgot-password
+ */
+export const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Please provide an email address' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+        if (!user) {
+            // Return success even if user not found to prevent email enumeration
+            return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+        }
+
+        // Generate token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { resetPasswordToken, resetPasswordExpires }
+        });
+
+        // Send Email
+        const resetURL = `http://localhost:5174/reset-password/${resetToken}`;
+        const message = `Forgot your password? Reset it here: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
+
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Your password reset token (valid for 10 min)',
+                message
+            });
+            res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+        } catch (error) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { resetPasswordToken: null, resetPasswordExpires: null }
+            });
+            console.error(error);
+            return res.status(500).json({ success: false, message: 'There was an error sending the email. Try again later!' });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Reset Password
+ * POST /api/auth/reset-password/:token
+ */
+export const resetPassword = async (req, res, next) => {
+    try {
+        const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+        const user = await prisma.user.findFirst({
+            where: {
+                resetPasswordToken: hashedToken,
+                resetPasswordExpires: { gt: new Date() }
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'Token is invalid or has expired' });
+        }
+
+        const { password } = req.body;
+        if (!isValidPassword(password)) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+        }
+
+        const hashedPassword = await hashPassword(password);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetPasswordToken: null,
+                resetPasswordExpires: null
+            }
+        });
+
+        res.status(200).json({ success: true, message: 'Password reset successful. Please login.' });
     } catch (error) {
         next(error);
     }

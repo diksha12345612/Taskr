@@ -1,53 +1,14 @@
 // Prisma Schema for Taskr - Team Task Manager
 // Generated: May 2026
-// Database: PostgreSQL
+// Database: SQLite (Changed for maximum compatibility)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-// ============================================================================
-// ENUMS - Type-safe status and role definitions
-// ============================================================================
-
-enum UserRole {
-  Admin   
-  Member  
-}
-
-enum ProjectStatus {
-  Active      
-  Review      
-  Hold        
-}
-
-enum TaskStatus {
-  Todo        
-  InProgress  
-  Completed   
-}
-
-enum TaskPriority {
-  High        
-  Medium      
-  Low         
-}
-
-enum AttendanceStatus {
-  Present
-  Absent
-  Late
-}
-
-enum LeaveStatus {
-  Pending
-  Approved
-  Rejected
 }
 
 // ============================================================================
@@ -56,12 +17,15 @@ enum LeaveStatus {
 
 model User {
   id        String   @id @default(cuid())
-  name      String   @db.VarChar(255)
-  email     String   @unique @db.VarChar(255)
-  password  String   @db.Text
-  role      UserRole @default(Member)
-  
+  name      String
+  email     String   @unique
+  password             String
+  role                 String    @default("Member") // Admin, Member
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+
   assignedTasks Task[] @relation("assignee")
+  projects      Project[] @relation("ProjectMembers")
   attendance    Attendance[]
   leaveRequests LeaveRequest[]
   
@@ -69,32 +33,31 @@ model User {
 
   @@index([email])
   @@index([role])
-  @@map("users")
 }
 
 model Project {
   id          String        @id @default(cuid())
-  name        String        @db.VarChar(255)
-  description String?       @db.Text
-  status      ProjectStatus @default(Active)
-  progress    Int           @default(0) @db.SmallInt 
+  name        String
+  description String?
+  status      String @default("Active") // Active, Review, Hold
+  progress    Int           @default(0)
   
-  tasks Task[]
+  tasks   Task[]
+  members User[] @relation("ProjectMembers")
   
   createdAt DateTime @default(now())
 
   @@index([status])
   @@index([progress])
-  @@map("projects")
 }
 
 model Task {
   id          String       @id @default(cuid())
-  title       String       @db.VarChar(255)
-  description String?      @db.Text
-  priority    TaskPriority @default(Medium)
-  status      TaskStatus   @default(Todo)
-  dueDate     DateTime?    @db.Date
+  title       String
+  description String?
+  priority    String @default("Medium") // High, Medium, Low
+  status      String   @default("Todo") // Todo, InProgress, Completed
+  dueDate     DateTime?
   
   projectId  String
   project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -109,20 +72,18 @@ model Task {
   @@index([status])
   @@index([priority])
   @@index([dueDate])
-  @@map("tasks")
 }
 
 model Attendance {
   id        String           @id @default(cuid())
   userId    String
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime         @db.Date
-  status    AttendanceStatus @default(Present)
+  date      DateTime
+  status    String @default("Present") // Present, Absent, Late
   checkIn   DateTime?
   checkOut  DateTime?
   
   @@unique([userId, date])
-  @@map("attendance")
 }
 
 model LeaveRequest {
@@ -130,11 +91,10 @@ model LeaveRequest {
   userId     String
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   type       String      
-  startDate  DateTime    @db.Date
-  endDate    DateTime    @db.Date
-  reason     String?     @db.Text
-  status     LeaveStatus @default(Pending)
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  status     String @default("Pending") // Pending, Approved, Rejected
   
   createdAt  DateTime    @default(now())
-  @@map("leave_requests")
 }

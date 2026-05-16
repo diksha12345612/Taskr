@@ -1,9 +1,16 @@
 import express from 'express';
-import { getTasks, createTask, updateTaskStatus, deleteTask } from '../controllers/taskController.js';
+import { getTasks, createTask, updateTaskStatus, deleteTask, getDashboardStats } from '../controllers/taskController.js';
 import { authenticate } from '../middleware/auth.js';
 import { allowRoles } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
+
+/**
+ * @route   GET /api/tasks/stats
+ * @desc    Get dashboard statistics
+ * @access  Private
+ */
+router.get('/stats', authenticate, getDashboardStats);
 
 /**
  * @route   GET /api/tasks

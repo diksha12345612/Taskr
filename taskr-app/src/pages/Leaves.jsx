@@ -65,13 +65,18 @@ export default function Leaves() {
             <h1 className="text-[26px] font-[800] font-outfit tracking-tight">Leave Management</h1>
             <p className="text-[12px] text-[var(--text-muted)] font-medium">Request and manage time off for the team</p>
           </div>
-          
-          <button 
-            onClick={() => setShowModal(true)}
-            className="h-[42px] px-6 bg-[var(--accent)] text-white text-[13px] font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent-dim)]"
-          >
-            Request Leave
-          </button>
+          {!isAdmin ? (
+            <button 
+              onClick={() => setShowModal(true)}
+              className="h-[42px] px-6 bg-[var(--accent)] text-white text-[13px] font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent-dim)]"
+            >
+              Request Leave
+            </button>
+          ) : (
+            <div className="h-[42px] px-6 flex items-center bg-[var(--bg-raised)] text-[var(--text-secondary)] text-[13px] font-bold rounded-xl border border-[var(--border)]">
+              Admin Approval Mode
+            </div>
+          )}
         </header>
 
         {/* Leaves Table */}
