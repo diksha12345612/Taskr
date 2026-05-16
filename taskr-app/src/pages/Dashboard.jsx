@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [pendingLeaves, setPendingLeaves] = useState([]);
+  const [myAttendance, setMyAttendance] = useState([]);
   const [myLeaves, setMyLeaves] = useState([]);
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,17 +46,30 @@ export default function Dashboard() {
         
         if (isAdmin) {
           setAllUsers(results[3].data.data || []);
+          const allL = results[4].data.data || [];
+          setPendingLeaves(allL.filter(l => l.status === 'Pending'));
         } else {
+          setMyAttendance(results[3].data.data || []);
           setMyLeaves(results[4].data.data || []);
         }
       } catch (err) {
-        // Log error silently
+        console.error('Dashboard error:', err);
       } finally {
         setLoading(false);
       }
     })();
     return () => clearInterval(timer);
   }, [isAdmin]);
+
+  const handleLeaveAction = async (id, status) => {
+    try {
+      await updateLeaveStatus(id, status);
+      setPendingLeaves(prev => prev.filter(l => l.id !== id));
+      alert(`Status updated to ${status}.`);
+    } catch (err) {
+      alert('Action failed.');
+    }
+  };
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
