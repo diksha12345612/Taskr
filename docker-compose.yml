@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:./dev.db
+      JWT_SECRET: TaskrSuperSecretKey2026_VerySecureKey123eKey123
+      JWT_EXPIRE: 7d
+      CORS_ORIGIN: http://localhost:5000
+      API_PREFIX: /api
+    volumes:
+      - ./backend/dev.db:/app/backend/dev.db
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

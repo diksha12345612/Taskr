@@ -8,11 +8,17 @@ COPY package*.json ./
 COPY backend/package*.json ./backend/
 COPY taskr-app/package*.json ./taskr-app/
 
-# Install dependencies
-RUN npm install --omit=dev
+# Install all dependencies (including dev dependencies needed for build)
+RUN npm install
 
 # Copy application code
 COPY . .
+
+# Build frontend
+RUN npm run build:frontend
+
+# Remove dev dependencies for production
+RUN npm prune --omit=dev
 
 # Set environment
 ENV NODE_ENV=production

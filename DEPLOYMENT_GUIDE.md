@@ -1,5 +1,59 @@
 # 🚀 Deployment Guide - Taskr Application
 
+## Docker Deployment (Local & Cloud)
+
+### Prerequisites
+- Docker installed ([Download](https://www.docker.com/products/docker-desktop))
+- Docker Compose (included with Docker Desktop)
+
+### Option 1: Docker Compose (Easiest)
+
+```bash
+# Start application
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop application
+docker-compose down
+```
+
+Access at: **http://localhost:5000**
+
+### Option 2: Manual Docker Build
+
+```bash
+# Build image
+docker build -t taskr:latest .
+
+# Run container
+docker run -p 5000:5000 \
+  -e NODE_ENV=production \
+  -e DATABASE_URL=file:./dev.db \
+  taskr:latest
+
+# Or with volume for persistent database
+docker run -p 5000:5000 \
+  -e NODE_ENV=production \
+  -e DATABASE_URL=file:./dev.db \
+  -v $(pwd)/backend/dev.db:/app/backend/dev.db \
+  taskr:latest
+```
+
+### Docker Environment Variables
+
+```env
+NODE_ENV=production          # Always use production
+DATABASE_URL=file:./dev.db   # SQLite path in container
+JWT_SECRET=<your-secret>     # Keep same as local
+JWT_EXPIRE=7d                # Token expiration
+CORS_ORIGIN=http://localhost:5000  # For local Docker
+API_PREFIX=/api              # API prefix
+```
+
+---
+
 ## Railway Deployment (Recommended)
 
 ### Prerequisites
@@ -39,6 +93,14 @@ In Railway settings:
 Railway automatically deploys when you push to main branch.
 
 ### Troubleshooting Deployment
+
+#### Error: "vite: not found" in Docker build
+
+**Solution:** 
+The Dockerfile now installs all dependencies (including dev) before building the frontend, then prunes dev dependencies. This issue is fixed. Rebuild with:
+```bash
+docker build --no-cache -t taskr:latest .
+```
 
 #### Error: "Environment variable not found: DATABASE_URL"
 
@@ -152,7 +214,43 @@ npx prisma db seed
 
 ---
 
+### Docker Health Check
+
+The `docker-compose.yml` includes a health check that verifies the application is running:
+
+```bash
+# Check container health
+docker-compose ps
+
+# View health status
+docker inspect <container-id> | grep -A 5 "Health"
+```
+
+### Persistent Database in Docker
+
+SQLite database is stored in a volume to persist data between container restarts:
+
+```bash
+# Create named volume (recommended for production)
+docker volume create taskr-db
+
+# Use in docker-compose.yml:
+volumes:
+  - taskr-db:/app/backend/dev.db
+```
+
+---
+
 ## Monitoring & Logs
+
+### Docker Logs
+```bash
+# View logs
+docker-compose logs -f app
+
+# View specific number of lines
+docker-compose logs --tail=50 app
+```
 
 ### Railway Logs
 1. Go to your Railway project
