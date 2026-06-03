@@ -24,7 +24,7 @@ Access at: **http://localhost:5000**
 ### Option 2: Manual Docker Build
 
 ```bash
-# Build image
+# Build image (with system dependencies)
 docker build -t taskr:latest .
 
 # Run container
@@ -40,6 +40,17 @@ docker run -p 5000:5000 \
   -v $(pwd)/backend/dev.db:/app/backend/dev.db \
   taskr:latest
 ```
+
+### Docker Build Process
+
+The Dockerfile now:
+1. ✅ Installs system dependencies (openssl, ca-certificates, python, g++, make)
+2. ✅ Installs all npm dependencies
+3. ✅ Builds frontend with Vite
+4. ✅ Generates Prisma Client at build time
+5. ✅ At runtime: Sets up environment and runs `prisma db push`
+
+**Key Fix:** Added system packages to Alpine to support Prisma's schema engine
 
 ### Docker Environment Variables
 
@@ -101,6 +112,26 @@ The Dockerfile now installs all dependencies (including dev) before building the
 ```bash
 docker build --no-cache -t taskr:latest .
 ```
+
+#### Error: "Prisma failed to detect libssl/openssl version" + "Could not parse schema engine response"
+
+**Solution:**
+The Dockerfile now installs system dependencies required for Prisma's schema engine:
+```dockerfile
+RUN apk add --no-cache \
+    openssl \
+    ca-certificates \
+    python3 \
+    make \
+    g++
+```
+
+This was causing Prisma to fail silently with JSON parse errors. The issue is now fixed in the latest Dockerfile.
+
+**Fix Applied:**
+- ✅ Added system package installation to Alpine
+- ✅ Database setup (`prisma db push`) now runs at container startup instead of build time
+- ✅ setup-env.js now handles both environment setup and database initialization
 
 #### Error: "Environment variable not found: DATABASE_URL"
 

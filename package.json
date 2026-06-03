@@ -10,7 +10,7 @@
         "db:setup": "npm run setup-env && cd backend && npx prisma generate && npx prisma db push --accept-data-loss",
         "postinstall": "npm run install:backend && npm run install:frontend",
         "prebuild": "npm run build:frontend",
-        "start": "npm run db:setup && cd backend && npm start",
+        "start": "npm run setup-env && cd backend && npm start",
         "dev": "npm run install:backend && cd backend && npm run dev"
     }
 }

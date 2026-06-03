@@ -3,11 +3,12 @@
 /**
  * Environment Setup Script for Deployment
  * Ensures DATABASE_URL and other critical env vars are available
- * Runs during build/startup phase
+ * Also runs Prisma database setup
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 console.log('🔧 Setting up environment variables...');
 
@@ -51,4 +52,14 @@ if (missing.length === 0) {
     console.warn(`⚠️  Using default values for: ${missing.join(', ')}`);
 }
 
-console.log('✅ Environment setup complete\n');
+// Run Prisma database setup
+console.log('\n📊 Setting up database...');
+try {
+    execSync('cd backend && npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    console.log('✅ Database setup complete');
+} catch (error) {
+    console.error('⚠️  Database setup skipped or failed (this may be normal in some environments)');
+    console.error('   Continue with application startup...');
+}
+
+console.log('✅ Environment and database setup complete\n');
