@@ -4,7 +4,23 @@
 
 🌐 **Live Demo:** [https://web-production-c48f8.up.railway.app](https://web-production-c48f8.up.railway.app)
 
-## 📸 Screenshots & Features
+## �️ Local Development
+
+Run the application locally on your machine:
+
+```bash
+# Start both frontend and backend
+npm run dev
+```
+
+**Frontend:** http://localhost:5173
+**Backend API:** http://localhost:5000/api
+
+**Test Credentials:**
+- Email: `admin@example.com`
+- Password: `Admin@123456`
+
+## �📸 Screenshots & Features
 
 ### Login & Authentication
 - **Email/Password Login** with strong password validation
@@ -65,3 +81,8 @@
 1. Install dependencies: `npm run install-all`
 2. Sync Database: `cd backend && npx prisma db push`
 3. Run App: `npm run dev`
+
+Once running, access the application at:
+- 🌐 **Frontend:** http://localhost:5173
+- 🔗 **API:** http://localhost:5000/api
+- 📊 **Prisma Studio:** `npx prisma studio` (in backend directory)
