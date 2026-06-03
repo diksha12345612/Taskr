@@ -54,10 +54,10 @@ export default function Attendance() {
       <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-10">
         <header className="mb-12" style={{ animation: 'springIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
           <div className="flex items-center gap-3 mb-2">
-             <span className="text-3xl">⏰</span>
-             <h1 className="text-[32px] font-[800] tracking-tight">Time & Presence</h1>
+             <span className="text-3xl">👋</span>
+             <h1 className="text-[32px] font-black tracking-tight">Daily Check-In</h1>
           </div>
-          <p className="text-[14px] text-[var(--text-secondary)] font-medium max-w-lg">Track your daily rhythm and stay in sync with the team.</p>
+          <p className="text-[14px] text-[var(--text-secondary)] font-medium max-w-lg">Let the team know you're here and ready to roll.</p>
         </header>
 
         {/* Quick Actions */}
@@ -80,6 +80,7 @@ export default function Attendance() {
             
             <div className="flex gap-4 w-full max-w-md">
               <button 
+                type="button"
                 onClick={handleCheckIn}
                 disabled={!!todayRecord?.checkIn}
                 className="flex-1 h-[54px] bg-[var(--accent)] text-white font-[800] rounded-2xl hover:bg-[var(--accent-hover)] transition-all disabled:opacity-50 shadow-lg shadow-[var(--accent-dim)] transform active:scale-95"
@@ -87,6 +88,7 @@ export default function Attendance() {
                 {todayRecord?.checkIn ? 'Checked In' : 'Check In Now'}
               </button>
               <button 
+                type="button"
                 onClick={handleCheckOut}
                 disabled={!todayRecord?.checkIn || !!todayRecord?.checkOut}
                 className="flex-1 h-[54px] bg-[var(--bg-raised)] text-[var(--text-primary)] font-[800] rounded-2xl border border-[var(--border)] hover:border-[var(--accent)] transition-all disabled:opacity-50 transform active:scale-95"

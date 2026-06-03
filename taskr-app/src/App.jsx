@@ -16,10 +16,13 @@ import ComingSoon from './pages/ComingSoon';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
+import InteractiveBackground from './components/InteractiveBackground';
 
 function App() {
   return (
-    <Routes>
+    <>
+      <InteractiveBackground />
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -44,6 +47,7 @@ function App() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 }
 

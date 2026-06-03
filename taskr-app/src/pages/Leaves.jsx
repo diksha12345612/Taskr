@@ -62,11 +62,12 @@ export default function Leaves() {
       <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-8">
         <header className="flex items-center justify-between mb-10" style={{ animation: 'fadeSlideIn 0.4s ease forwards' }}>
           <div>
-            <h1 className="text-[26px] font-[800] font-outfit tracking-tight">Leave Management</h1>
-            <p className="text-[12px] text-[var(--text-muted)] font-medium">Request and manage time off for the team</p>
+            <h1 className="text-[26px] font-[800] font-outfit tracking-tight">Time Off</h1>
+            <p className="text-[12px] text-[var(--text-muted)] font-medium">Take a break, you've earned it.</p>
           </div>
           {!isAdmin ? (
             <button 
+              type="button"
               onClick={() => setShowModal(true)}
               className="h-[42px] px-6 bg-[var(--accent)] text-white text-[13px] font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent-dim)]"
             >
@@ -123,8 +124,8 @@ export default function Leaves() {
                       <td className="p-4 text-right pr-8">
                         {isAdmin && leave.status === 'Pending' ? (
                           <div className="flex justify-end gap-2">
-                            <button onClick={() => handleStatusUpdate(leave.id, 'Approved')} className="px-2 py-1 bg-[var(--green-dim)] text-[var(--green)] rounded text-[10px] font-bold hover:bg-[var(--green)] hover:text-white transition-all">APPROVE</button>
-                            <button onClick={() => handleStatusUpdate(leave.id, 'Rejected')} className="px-2 py-1 bg-[var(--red-dim)] text-[var(--red)] rounded text-[10px] font-bold hover:bg-[var(--red)] hover:text-white transition-all">REJECT</button>
+                            <button type="button" onClick={() => handleStatusUpdate(leave.id, 'Approved')} className="px-2 py-1 bg-[var(--green-dim)] text-[var(--green)] rounded text-[10px] font-bold hover:bg-[var(--green)] hover:text-white transition-all">APPROVE</button>
+                            <button type="button" onClick={() => handleStatusUpdate(leave.id, 'Rejected')} className="px-2 py-1 bg-[var(--red-dim)] text-[var(--red)] rounded text-[10px] font-bold hover:bg-[var(--red)] hover:text-white transition-all">REJECT</button>
                           </div>
                         ) : (
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -140,7 +141,10 @@ export default function Leaves() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={isAdmin ? 5 : 4} className="p-12 text-center text-[var(--text-muted)] text-[14px]">No leave records found.</td>
+                    <td colSpan={isAdmin ? 5 : 4} className="p-16 text-center text-[var(--text-muted)] text-[14px]">
+                       <div className="text-4xl mb-4 opacity-50">🌴</div>
+                       <p className="italic">No time off requested yet. Planning a vacation?</p>
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -150,8 +154,8 @@ export default function Leaves() {
         {/* Request Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-             <div className="bg-[var(--bg-surface)] border border-[var(--border)] w-full max-w-[420px] rounded-[24px] p-8 shadow-2xl relative animate-fade-in">
-                <h2 className="text-[20px] font-bold mb-6">Request Time Off</h2>
+             <div className="bg-[var(--bg-surface)] border border-[var(--border)] w-full max-w-[420px] rounded-[32px] p-8 shadow-2xl relative animate-spring">
+                <h2 className="text-[24px] font-black mb-6">Schedule Time Off</h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                    <div>
                       <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase mb-2">Leave Type</label>

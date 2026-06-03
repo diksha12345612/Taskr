@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getProfile, logout, googleLogin, forgotPassword, resetPassword } from '../controllers/auth.js';
+import { register, login, getProfile, logout, forgotPassword, resetPassword } from '../controllers/auth.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -17,10 +17,6 @@ router.post('/register', register);
 // POST /api/auth/login
 // Body: { email, password }
 router.post('/login', login);
-
-// Google Login
-// POST /api/auth/google
-router.post('/google', googleLogin);
 
 // Forgot Password
 // POST /api/auth/forgot-password

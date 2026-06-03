@@ -179,101 +179,45 @@ export const login = async(req, res, next) => {
  * Requires: authenticate middleware
  */
 export const getProfile = async(req, res, next) => {
-    try {
-        const userId = req.userId;
+try {
+    const userId = req.userId;
 
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                createdAt: true,
-            },
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+        },
+    });
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: 'User not found',
         });
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found',
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Profile retrieved successfully',
-            data: { user },
-        });
-    } catch (error) {
-        next(error);
     }
+
+    res.status(200).json({
+        success: true,
+        message: 'Profile retrieved successfully',
+        data: { user },
+    });
+} catch (error) {
+    next(error);
+}
 };
 
-import { OAuth2Client } from 'google-auth-library';
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-/**
- * Google Login
- * POST /api/auth/google
- */
-export const googleLogin = async (req, res, next) => {
-    try {
-        const { credential } = req.body;
-        
-        // Verify the Google token
-        const ticket = await client.verifyIdToken({
-            idToken: credential,
-            audience: process.env.GOOGLE_CLIENT_ID
-        });
-        
-        const payload = ticket.getPayload();
-        const { sub, email, name, picture } = payload;
-
-        // Check if user exists
-        let user = await prisma.user.findUnique({
-            where: { email: email.toLowerCase() }
-        });
-
-        if (!user) {
-            // Create new user if they don't exist
-            user = await prisma.user.create({
-                data: {
-                    name: name,
-                    email: email.toLowerCase(),
-                    password: 'GOOGLE_AUTH_USER', // Placeholder
-                    role: 'Member'
-                },
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true
-                }
-            });
-        }
-
-        // Generate token
-        const token = generateToken(user.id);
-
-        res.status(200).json({
-            success: true,
-            message: 'Google login successful',
-            data: {
-                token,
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    avatar: picture
-                }
-            }
-        });
-    } catch (error) {
-        next(error);
-    }
+}
+}
+});
+}
+catch (error) {
+    next(error);
+}
 };
 
 /**
@@ -297,7 +241,7 @@ export const logout = async(req, res, next) => {
  * Forgot Password
  * POST /api/auth/forgot-password
  */
-export const forgotPassword = async (req, res, next) => {
+export const forgotPassword = async(req, res, next) => {
     try {
         const { email } = req.body;
         if (!email) {
@@ -348,7 +292,7 @@ export const forgotPassword = async (req, res, next) => {
  * Reset Password
  * POST /api/auth/reset-password/:token
  */
-export const resetPassword = async (req, res, next) => {
+export const resetPassword = async(req, res, next) => {
     try {
         const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 

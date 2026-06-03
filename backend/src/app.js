@@ -48,6 +48,16 @@ app.use(express.urlencoded({ limit: '10kb', extended: true }));
  * ==========================================
  */
 
+// Health check endpoint
+app.get(`${config.api_prefix}/health`, (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'Taskr API is healthy and running',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
 // Register modules
 app.use(`${config.api_prefix}/auth`, authRoutes);
 app.use(`${config.api_prefix}/projects`, projectRoutes);

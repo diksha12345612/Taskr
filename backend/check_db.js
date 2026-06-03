@@ -1,7 +1,7 @@
 import db from './src/config/database.js';
 
 try {
-  const result = await db.$queryRawUnsafe('SELECT NOW() as time, current_database() as dbname');
+  const result = await db.$queryRawUnsafe("SELECT datetime('now') as time, 'dev.db' as dbname");
   console.log('✅ Database Connected!');
   console.log('   Database:', result[0].dbname);
   console.log('   Server Time:', result[0].time);

@@ -1,41 +1,41 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'),
+    baseURL: import.meta.env.VITE_API_URL || (
+        import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'),
 });
 
 // Request interceptor: attach Authorization header
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
 );
 
 // Response interceptor: handle 401 Unauthorized
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      // Clear local storage and redirect to login
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // Clear local storage and redirect to login
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
 );
 
 // Auth
 export const loginUser = (data) => api.post('/auth/login', data);
 export const registerUser = (data) => api.post('/auth/register', data);
-export const googleLogin = (data) => api.post('/auth/google', data);
 export const forgotPassword = (data) => api.post('/auth/forgot-password', data);
 export const resetPassword = (token, data) => api.post(`/auth/reset-password/${token}`, data);
 
@@ -48,8 +48,8 @@ export const deleteProject = (id) => api.delete(`/projects/${id}`);
 
 // Tasks
 export const getTasks = (projectId) => {
-  const url = projectId ? `/tasks?projectId=${projectId}` : '/tasks';
-  return api.get(url);
+    const url = projectId ? `/tasks?projectId=${projectId}` : '/tasks';
+    return api.get(url);
 };
 export const getDashboardStats = () => api.get('/tasks/stats');
 export const createTask = (data) => api.post('/tasks', data);
