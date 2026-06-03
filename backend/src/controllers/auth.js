@@ -179,45 +179,35 @@ export const login = async(req, res, next) => {
  * Requires: authenticate middleware
  */
 export const getProfile = async(req, res, next) => {
-try {
-    const userId = req.userId;
+    try {
+        const userId = req.userId;
 
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            createdAt: true,
-        },
-    });
-
-    if (!user) {
-        return res.status(404).json({
-            success: false,
-            message: 'User not found',
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
+            },
         });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile retrieved successfully',
+            data: { user },
+        });
+    } catch (error) {
+        next(error);
     }
-
-    res.status(200).json({
-        success: true,
-        message: 'Profile retrieved successfully',
-        data: { user },
-    });
-} catch (error) {
-    next(error);
-}
-};
-
-
-}
-}
-});
-}
-catch (error) {
-    next(error);
-}
 };
 
 /**
