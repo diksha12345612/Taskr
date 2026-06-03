@@ -4,27 +4,44 @@
 
 🌐 **Live Demo:** [https://web-production-c48f8.up.railway.app](https://web-production-c48f8.up.railway.app)
 
-## 📸 Screenshots
+## 📸 Screenshots & Features
 
 ### Login & Authentication
-![Login Page](./backend/login.png)
-Email/password authentication with strong password validation and forgot password functionality.
+- **Email/Password Login** with strong password validation
+- Forgot password functionality with token-based reset
+- Professional green & white themed interface
+- Form validation with visual feedback
 
-### User Registration
-![Signup Page](./backend/signup.png)
-Create account with role selection (Member or Admin). All signups default to Member role for security.
+### User Registration  
+- Create account with full name and email
+- Strong password requirements (6+ chars, uppercase, lowercase, number, special char)
+- Account Type selection (Member or Admin - admin enforced on backend)
+- Email verification support
+- All signups default to Member role for security
 
 ### Admin Dashboard
-![Admin Dashboard](./backend/dashboard.png)
-Real-time dashboard showing daily digest, task statistics, projects, and performance metrics. Admin users have access to team management features.
+- Personalized greeting ("Good afternoon, Admin!")
+- Daily digest with task summary
+- Tasks by status breakdown (To Do, In Progress, Done)
+- Projects overview and team metrics
+- Navigation access to Management features
+- Real-time task statistics
 
 ### Team Management
-![Members Page](./backend/members.png)
-View all team members with roles (Admin/Member). Admin can add new members and manage the team.
+- "Meet the team" page for admins
+- View all team members with assigned roles
+- Role badges showing Admin/Member status
+- Add new team members (admin only)
+- Delete members from team (admin only)
+- Search and filter functionality
 
 ### Performance Analytics
-![Insights Page](./backend/insights.png)
-Advanced analytics dashboard with global velocity, project completion rates, team stability metrics, and detailed performance breakdowns.
+- Global velocity and project completion metrics
+- High Pressure Load indicators
+- Project stability analysis
+- Average turnaround time tracking
+- Detailed performance breakdown by project
+- Admin-only analytics dashboard
 
 ## ✨ Key Features
 
