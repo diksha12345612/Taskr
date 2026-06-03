@@ -1,17 +1,17 @@
 # Taskr Backend API
 
-A modern, scalable Node.js backend for the Taskr team task management application.
+A modern, scalable Node.js backend for the Taskr team task management application with JWT authentication, role-based access control, and comprehensive task management APIs.
 
 ## Tech Stack
 
-- **Runtime:** Node.js (v18+)
-- **Framework:** Express.js
-- **Database:** PostgreSQL
-- **ORM:** Prisma
-- **Authentication:** JWT (JSON Web Tokens)
-- **Password Hashing:** bcryptjs
-- **Environment:** dotenv
-- **CORS:** cors
+- **Runtime:** Node.js (v24+)
+- **Framework:** Express.js (v4.18.2)
+- **Database:** SQLite 3
+- **ORM:** Prisma (v5.8.0)
+- **Authentication:** JWT (JSON Web Tokens) with bcryptjs
+- **Port:** 5000
+- **CORS:** Enabled for frontend (http://localhost:5173)
+- **Environment:** dotenv with secure key management
 
 ## Project Structure
 
@@ -50,9 +50,9 @@ backend/
 
 Before you begin, ensure you have:
 
-- **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
-- **PostgreSQL** (v14 or higher) - [Download](https://www.postgresql.org/download/)
-- **npm** or **yarn** - Comes with Node.js
+- **Node.js** (v24 or higher) - [Download](https://nodejs.org/)
+- **npm** (comes with Node.js)
+- No external database required (SQLite file-based)
 
 ## Getting Started
 
@@ -64,79 +64,47 @@ cd backend
 
 # Install dependencies
 npm install
+
+# Generate Prisma Client
+npx prisma generate
 ```
 
-### 2. Database Setup
+### 2. Environment Variables
 
-#### Local PostgreSQL Setup
-
-```bash
-# On Windows
-# Start PostgreSQL service and connect to psql
-
-# Create database
-createdb taskr_db
-
-# Create user (if not exists)
-createuser -P taskr_user
-```
-
-#### Set Password for User
-
-```bash
-# Connect to PostgreSQL
-psql -U postgres
-
-# Set password for taskr_user
-\password taskr_user
-
-# Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE taskr_db TO taskr_user;
-
-# Exit
-\q
-```
-
-### 3. Environment Variables
-
-Copy `.env.example` to `.env` and update values:
+Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
+Default `.env` values:
 
 ```env
 NODE_ENV=development
 PORT=5000
-DATABASE_URL=postgresql://taskr_user:taskr_password@localhost:5432/taskr_db
-JWT_SECRET=your_super_secret_jwt_key_min_32_chars_required
+DATABASE_URL="file:./dev.db"
+JWT_SECRET=TaskrSuperSecretKey2026_VerySecureKey123eKey123
 JWT_EXPIRE=7d
 CORS_ORIGIN=http://localhost:5173
 API_PREFIX=/api
 ```
 
-### 4. Database Migration
+The SQLite database file (`dev.db`) will be created automatically on first run.
+
+### 3. Database Setup
 
 ```bash
-# Generate Prisma Client
-npm run prisma:generate
+# Push schema to database (creates dev.db if doesn't exist)
+npx prisma db push
 
-# Run migrations
-npm run migrate
-
-# Or push schema (for development)
-npm run db:push
+# Optional: Seed database with sample data
+npm run seed
 ```
 
-### 5. Start Development Server
+### 4. Start Development Server
 
 ```bash
 # Development mode (with auto-reload)
-npm run dev
-
-# Production mode
 npm start
 ```
 
@@ -153,8 +121,7 @@ Expected response:
 ```json
 {
   "success": true,
-  "message": "Server is running",
-  "timestamp": "2026-05-15T10:30:00.000Z"
+  "message": "Server is running"
 }
 ```
 
@@ -162,22 +129,19 @@ Expected response:
 
 ```bash
 # Generate Prisma Client after schema changes
-npm run prisma:generate
+npx prisma generate
 
-# Create a new migration
-npm run migrate
+# Push schema to database (SQLite)
+npx prisma db push
 
-# Apply migrations in production
-npm run migrate:prod
-
-# Push schema changes directly (development only)
-npm run db:push
+# Open Prisma Studio (GUI for database)
+npx prisma studio
 
 # Reset database (CAUTION - deletes all data)
-npm run db:reset
+npx prisma db reset
 ```
 
-## API Endpoints (Ready to Implement)
+## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - Register new user
@@ -233,68 +197,6 @@ The API returns standardized error responses:
 - `422` - Validation Error
 - `500` - Internal Server Error
 
-## Deployment (Railway)
-
-### Railway Setup
-
-1. Connect GitHub repository to Railway
-2. Create PostgreSQL database on Railway
-3. Set environment variables in Railway dashboard
-4. Configure build command: `npm install && npm run migrate:prod`
-5. Configure start command: `npm start`
-
-### Environment Variables for Production
-
-```env
-NODE_ENV=production
-PORT=5000 (Railway sets this automatically)
-DATABASE_URL=<railway-postgres-url>
-JWT_SECRET=<strong-32-char-secret>
-JWT_EXPIRE=7d
-CORS_ORIGIN=<your-frontend-url>
-API_PREFIX=/api
-```
-
-## Development Tips
-
-### Hot Reload
-
-The development server uses `nodemon` for automatic restart on file changes.
-
-```bash
-npm run dev
-```
-
-### Debugging
-
-Enable debug logging in development:
-
-```javascript
-// In src/config/database.js
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-});
-```
-
-### Database Browser
-
-View and manage database using Prisma Studio:
-
-```bash
-npx prisma studio
-```
-
-## Best Practices
-
-1. **Always validate input** - Use validation utilities in `src/utils/validation.js`
-2. **Use middleware** - Apply `authenticate` to protected routes
-3. **Handle errors** - Use `asyncHandler` to catch async errors
-4. **Environment variables** - Never hardcode secrets
-5. **Database queries** - Use Prisma for all database operations
-6. **Password hashing** - Always hash passwords before storing
-7. **Rate limiting** - Implement in production
-8. **Input sanitization** - Validate and sanitize user input
-
 ## Troubleshooting
 
 ### Port Already in Use
@@ -309,23 +211,26 @@ taskkill /PID <PID> /F
 # Or change PORT in .env
 ```
 
-### Database Connection Failed
+### Database File Not Found
 
 ```bash
-# Verify PostgreSQL is running
-# Check DATABASE_URL in .env
-# Ensure user has correct permissions
-# Try resetting the database: npm run db:reset
+# Reset database (creates new dev.db)
+npx prisma db reset
+
+# Or manually delete dev.db and restart server
+del dev.db
+npm start
 ```
 
 ### Prisma Client Issues
 
 ```bash
 # Regenerate Prisma Client
-npm run prisma:generate
+npx prisma generate
 
-# Clear Prisma cache
-npx prisma generate --skip-engine-check
+# Clear node_modules and reinstall
+rm -r node_modules
+npm install
 ```
 
 ## Environment Variables Reference
@@ -334,6 +239,47 @@ npx prisma generate --skip-engine-check
 |----------|-------------|---------|
 | NODE_ENV | Environment mode | development |
 | PORT | Server port | 5000 |
+| DATABASE_URL | SQLite database path | file:./dev.db |
+| JWT_SECRET | JWT signing secret | TaskrSuperSecretKey2026_VerySecureKey123eKey123 |
+| JWT_EXPIRE | JWT expiration time | 7d |
+| CORS_ORIGIN | Frontend CORS origin | http://localhost:5173 |
+| API_PREFIX | API route prefix | /api |
+
+## Features Implemented
+
+- ✅ JWT Authentication (email/password)
+- ✅ Password Hashing (bcryptjs)
+- ✅ Role-Based Access Control (Admin/Member)
+- ✅ Password Reset with Token Validation
+- ✅ User Profile Management
+- ✅ Project Management
+- ✅ Task Management
+- ✅ Attendance Tracking
+- ✅ Leave Management
+- ✅ Team Management
+- ✅ Error Handling Middleware
+- ✅ CORS Configuration
+- ✅ Environment-based Configuration
+
+## Security Considerations
+
+1. **JWT Secret:** Min 32 characters, change in production
+2. **Password Requirements:** Min 6 chars, uppercase, lowercase, number, special char
+3. **CORS:** Restricted to frontend origin only
+4. **Token Expiry:** Automatically expires after 7 days
+5. **Password Reset:** One-time token with 1-hour expiration
+6. **Role Enforcement:** Backend forces 'Member' role on signup for security
+
+## Related Documentation
+
+- [Prisma Schema Reference](./PRISMA_SCHEMA_REFERENCE.md)
+- [Prisma Complete Guide](./PRISMA_COMPLETE_GUIDE.md)
+- [Authentication Setup Guide](./AUTH_SETUP.md)
+- [Setup Checklist](./SETUP_CHECKLIST.md)
+
+## License
+
+MIT
 | DATABASE_URL | PostgreSQL connection string | Required |
 | JWT_SECRET | Secret key for JWT tokens | Required |
 | JWT_EXPIRE | Token expiration time | 7d |

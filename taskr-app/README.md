@@ -1,16 +1,64 @@
-# React + Vite
+# Taskr Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React-based user interface for the Taskr team task management system with real-time updates, role-based dashboards, and advanced analytics.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework:** React.js (v19.2.6)
+- **Build Tool:** Vite (v8.0.13)
+- **Styling:** Tailwind CSS (v3.4.19)
+- **Routing:** React Router DOM (v7.15.1)
+- **HTTP Client:** Axios (v1.16.1)
+- **Port:** 5173 (development)
+- **Theme:** Green & White Professional Theme with Tailwind
 
-## React Compiler
+## Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+src/
+├── components/          # Reusable React components
+│   ├── Navbar.jsx      # Top navigation bar
+│   ├── Sidebar.jsx     # Side navigation menu
+│   ├── TaskRow.jsx     # Task list item
+│   ├── ProjectCard.jsx # Project display card
+│   └── ...
+├── pages/              # Full page components
+│   ├── Login.jsx       # Authentication page
+│   ├── Signup.jsx      # Registration page
+│   ├── Dashboard.jsx   # User dashboard
+│   ├── Projects.jsx    # Projects list
+│   ├── Tasks.jsx       # Tasks management
+│   ├── Members.jsx     # Team management (admin)
+│   └── ...
+├── context/            # React context providers
+│   ├── AuthContext.jsx # Authentication state
+│   └── ThemeContext.jsx # Theme management
+├── services/
+│   └── api.js          # Axios API client with interceptors
+└── App.jsx            # Root component
+```
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- 🔐 **Secure JWT Authentication:** Email/password login with password reset
+- 👥 **Role-Based Dashboards:** Separate views for Admins and Members
+- 📊 **Real-Time Analytics:** Performance metrics and project tracking
+- 📂 **Project Management:** Create and manage team projects
+- 👤 **Team Management:** Add/remove team members (admin only)
+- 📋 **Task Tracking:** Complete task lifecycle management
+- 🎨 **Modern UI/UX:** Responsive design with smooth animations
+
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+The frontend connects to the backend API at `http://localhost:5000/api`.
